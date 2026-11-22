@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:0;background:#f4f4f8;display:flex;justify-content:center;padding:30px 12px;color:#292929}
+.container{width:100%;max-width:420px;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px #0001}
+header{background:#6854cf;color:white;padding:22px}
+header h2{margin:0 0 5px}
+header p{margin:0;font-size:13px}
+.stats{display:flex;justify-content:space-around;padding:20px 5px;border-bottom:1px solid #eee;text-align:center}
+.stats h2{margin:0 0 5px;color:#6854cf}
+.stats p{margin:0;color:#888;font-size:12px}
+.tasks{padding:18px}
+.heading{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold}
+#progress{color:#6854cf;font-size:12px}
+.task{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #eee}
+.task input{accent-color:#6854cf}
+.info{flex:1;min-width:0}
+.info p{margin:0;font-size:14px;overflow-wrap:anywhere}
+.info small{color:#999;font-size:11px}
+.done p{text-decoration:line-through;color:#aaa}
+.dot{width:9px;height:9px;border-radius:50%}
+.high{background:#ef6464}
+.medium{background:#eebc50}
+.low{background:#38b990}
+.delete{border:0;background:none;color:#aaa;font-size:19px;cursor:pointer}
+.add{background:#faf9fd;padding:18px}
+.add h3{font-size:14px;margin:0 0 12px}
+.controls{display:flex;gap:6px}
+input,select,button{padding:10px;border:1px solid #ddd;border-radius:6px;font-size:12px}
+#name{flex:1;min-width:0}
+#addBtn{background:#6854cf;color:white;border:0;cursor:pointer}
+#date{width:100%;margin-top:8px}
+footer{text-align:center;padding:12px;color:#aaa;font-size:11px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h2>My Tasks</h2>
+<p id="today"></p>
+</header>
+
+<div class="stats">
+<div><h2 id="total">0</h2><p>Total</p></div>
+<div><h2 id="completed">0</h2><p>Completed</p></div>
+<div><h2 id="pending">0</h2><p>Pending</p></div>
+</div>
+
+<div class="tasks">
+<div class="heading">
+<span>My Tasks</span>
+<span id="progress">0%</span>
+</div>
+<div id="list"></div>
+</div>
+
+<div class="add">
+<h3>Add New Task</h3>
+<div class="controls">
+<input id="name" placeholder="Enter task...">
+<select id="priority">
+<option value="high">High</option>
+<option value="medium" selected>Medium</option>
+<option value="low">Low</option>
+</select>
+<button id="addBtn" onclick="addTask()">+</button>
+</div>
+<input type="date" id="date">
+</div>
+
+<footer>Personal Task Manager</footer>
+</div>
+
+<script>
+let tasks=JSON.parse(localStorage.getItem("tasks"))||[
+{id:1,title:"Complete project proposal",date:"Today",priority:"high",done:true},
+{id:2,title:"Team meeting",date:"Today",priority:"medium",done:false},
+{id:3,title:"Review design mockups",date:"Tomorrow",priority:"high",done:false}
+];
+
+document.getElementById("today").textContent=new Date().toDateString();
+
+function save(){
+localStorage.setItem("tasks",JSON.stringify(tasks));
+}
+
+function render(){
+let list=document.getElementById("list");
+list.innerHTML="";
+
+tasks.forEach(t=>{
+let div=document.createElement("div");
+div.className="task"+(t.done?" done":"");
+div.innerHTML=`
+<input type="checkbox" ${t.done?"checked":""} onchange="toggle(${t.id})">
+<div class="info"><p></p><small>${t.date}</small></div>
+<span class="dot ${t.priority}"></span>
+<button class="delete" onclick="removeTask(${t.id})">×</button>`;
+div.querySelector("p").textContent=t.title;
+list.appendChild(div);
+});
+
+let total=tasks.length;
+let completed=tasks.filter(t=>t.done).length;
+
+document.getElementById("total").textContent=total;
+document.getElementById("completed").textContent=completed;
+document.getElementById("pending").textContent=total-completed;
+document.getElementById("progress").textContent=(total?Math.round(completed/total*100):0)+"% completed";
+save();
+}
+
+function addTask(){
+let title=document.getElementById("name").value.trim();
+if(!title)return alert("Enter a task!");
+
+let date=document.getElementById("date").value;
+if(date)date=new Date(date+"T00:00:00").toDateString();
+else date="No deadline";
+
+tasks.push({
+id:Date.now(),
+title,
+date,
+priority:document.getElementById("priority").value,
+done:false
+});
+
+document.getElementById("name").value="";
+document.getElementById("date").value="";
+render();
+}
+
+function toggle(id){
+let task=tasks.find(t=>t.id===id);
+if(task)task.done=!task.done;
+render();
+}
+
+function removeTask(id){
+tasks=tasks.filter(t=>t.id!==id);
+render();
+}
+
+document.getElementById("name").addEventListener("keydown",e=>{
+if(e.key==="Enter")addTask();
+});
+
+render();
+</script>
+</body>
+</html>
